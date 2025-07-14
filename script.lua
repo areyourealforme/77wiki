@@ -155,6 +155,42 @@ HideAndSeek:AddToggle("dooresp", {
 	end
 })
 
+HideAndSeek:AddButton({ 
+	Text = "Teleport To Random Hider",
+	Func = function()
+		local Players = game:GetService("Players")
+		local LocalPlayer = Players.LocalPlayer
+		local Live = workspace:WaitForChild("Live")
+
+		local Others = {}
+		for _, Player in pairs(Players:GetPlayers()) do
+			if Player ~= LocalPlayer then
+				table.insert(Others, Player)
+			end
+		end
+
+		local Checked = {}
+
+		while #Checked < #Others do
+			local Index = math.random(1, #Others)
+			local Target = Others[Index]
+
+			if not table.find(Checked, Target) then
+				table.insert(Checked, Target)
+
+				local Char = Live:FindFirstChild(Target.Name)
+				if Char and Char:FindFirstChild("BlueVest") and Char:FindFirstChild("HumanoidRootPart") then
+					local MyChar = Live:FindFirstChild(LocalPlayer.Name)
+					if MyChar and MyChar:FindFirstChild("HumanoidRootPart") then
+						MyChar.HumanoidRootPart.CFrame = Char.HumanoidRootPart.CFrame * CFrame.new(0, 0, -5)
+						break
+					end
+				end
+			end
+		end
+	end,
+	DoubleClick = false
+})
 
 local Misc = Tab:AddRightGroupbox("Misc")
 
@@ -221,6 +257,94 @@ Misc:AddToggle("sprintboost",{Text="Maximize Sprinting Speed",Default=false,Call
 		end
 	end
 end})
+
+Misc:AddDivider()
+
+local Plr = game:GetService("Players").LocalPlayer
+local Live = workspace:WaitForChild("Live")
+
+local PowerChangedConn, VelocityAddedConn, CharacterAddedConn
+
+Misc:AddToggle("powerlock", { 
+	Text = "Higher Dash Velocity",
+	Default = false,
+	Tooltip = "Gives you the ability to dash further.",
+	Callback = function(State)
+		if State then
+			local function LockPowerAttribute(BodyVelocity)
+				if BodyVelocity:GetAttribute("Power") ~= nil then
+					BodyVelocity:SetAttribute("Power", 2)
+				end
+				PowerChangedConn = BodyVelocity:GetAttributeChangedSignal("Power"):Connect(function()
+					BodyVelocity:SetAttribute("Power", 2)
+				end)
+			end
+
+			local function SetupPowerLock()
+				local CharacterModel = Live:FindFirstChild(Plr.Name)
+				if not CharacterModel then return end
+
+				local Folder = CharacterModel:FindFirstChild("BVFolders")
+				if not Folder then return end
+
+				for _, Item in pairs(Folder:GetChildren()) do
+					if Item:IsA("Instance") and Item.Name == "BodyVelocity" then
+						LockPowerAttribute(Item)
+					end
+				end
+
+				VelocityAddedConn = Folder.ChildAdded:Connect(function(NewItem)
+					if NewItem:IsA("Instance") and NewItem.Name == "BodyVelocity" then
+						LockPowerAttribute(NewItem)
+					end
+				end)
+			end
+
+			if Live:FindFirstChild(Plr.Name) then
+				SetupPowerLock()
+			else
+				CharacterAddedConn = Live.ChildAdded:Connect(function(NewCharacter)
+					if NewCharacter.Name == Plr.Name then
+						SetupPowerLock()
+					end
+				end)
+			end
+		else
+			if PowerChangedConn then PowerChangedConn:Disconnect() end
+			if VelocityAddedConn then VelocityAddedConn:Disconnect() end
+			if CharacterAddedConn then CharacterAddedConn:Disconnect() end
+		end
+	end
+})
+
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Live = workspace:WaitForChild("Live")
+
+local JumpPowerConn
+
+Misc:AddToggle("jumplock", {
+	Text = "Disable Jump Lowering",
+	Default = false,
+	Callback = function(State)
+		if State then
+			JumpPowerConn = RunService.RenderStepped:Connect(function()
+				local Character = Live:FindFirstChild(LocalPlayer.Name)
+				if not Character then return end
+
+				local JumpPower = Character:FindFirstChild("JumpPowerAmount")
+				if JumpPower and JumpPower:IsA("NumberValue") then
+					JumpPower.Value = 50
+				end
+			end)
+		else
+			if JumpPowerConn then
+				JumpPowerConn:Disconnect()
+			end
+		end
+	end
+})
 
 local Rebel = Tab:AddRightGroupbox("Rebel")
 
