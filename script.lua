@@ -223,3 +223,16 @@ Misc:AddToggle("sprintboost",{Text="Maximize Sprinting Speed",Default=false,Call
 end})
 
 local Rebel = Tab:AddRightGroupbox("Rebel")
+
+Rebel:AddButton({
+    Text = "Modded MP5",
+    Tooltip = "Use this before picking up your gun.",
+    Func = function()
+        game:GetService("ReplicatedStorage").Weapons.Guns.MP5.MaxBullets.Value = math.huge
+        game:GetService("ReplicatedStorage").Weapons.Guns.MP5.FireRateCD.Value = 0
+        game:GetService("ReplicatedStorage").Weapons.Guns.MP5.ReloadingSpeed.Value = 0
+        game:GetService("ReplicatedStorage").Weapons.Guns.MP5.Spread.Value = math.huge
+        game:GetService("ReplicatedStorage").Weapons.Guns.MP5.BulletsPerFire.Value = 20
+    end,
+    DoubleClick = true
+})
